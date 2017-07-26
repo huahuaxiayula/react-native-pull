@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 import React, { Component } from 'react';
 import {
@@ -9,12 +9,14 @@ import {
     Animated,
     Easing,
     Dimensions,
-    ActivityIndicator
+    ActivityIndicator,
+    TouchableOpacity
 } from 'react-native';
 
 import i18n from './i18n';
 import styles from './style/index.js';
 
+const devHeight = Dimensions.get('window').height
 // const padding = 2; //scrollview与外面容器的距离
 const pullOkMargin = 100; //下拉到ok状态时topindicator距离顶部的距离
 const defaultDuration = 300;
@@ -46,7 +48,8 @@ export default class extends Component {
             pullPan: new Animated.ValueXY(this.defaultXY),
             scrollEnabled: this.defaultScrollEnabled,
             flag: defaultFlag,
-            height: 0
+            height: 0,
+            topTip:false,
         });
         this.gesturePosition = {x: 0, y: 0};
         this.onScroll = this.onScroll.bind(this);
@@ -57,6 +60,7 @@ export default class extends Component {
         this.setFlag = this.setFlag.bind(this);
         this.renderTopIndicator = this.renderTopIndicator.bind(this);
         this.defaultTopIndicatorRender = this.defaultTopIndicatorRender.bind(this);
+        this.renderTopTip = this.renderTopTip.bind(this)
         this.panResponder = PanResponder.create({
             onStartShouldSetPanResponder: this.onShouldSetPanResponder.bind(this),
             onMoveShouldSetPanResponder: this.onShouldSetPanResponder.bind(this),
@@ -137,6 +141,11 @@ export default class extends Component {
         } else if(!this.isPullState()) {
             this.setState({scrollEnabled: true});
         }
+        if(e.nativeEvent.contentOffset.y >devHeight){
+          this.setState({topTip:true})
+        }else{
+          this.setState({topTip:false})
+        }
     }
 
     isPullState() {
@@ -173,6 +182,7 @@ export default class extends Component {
 
     resetDefaultXYHandler() {
         this.flag = defaultFlag;
+        this.scroll.scrollTo({x:0, y: 0});
         this.state.pullPan.setValue(this.defaultXY);
     }
 
@@ -193,17 +203,24 @@ export default class extends Component {
     render() {
         let refreshControl = this.props.refreshControl;
         return (
-            <View style={[styles.wrap, this.props.style]} onLayout={this.onLayout}>
+            <View style={[styles.wrap, this.props.style,{position:'relative'}]} onLayout={this.onLayout}>
                 <Animated.View ref={(c) => {this.ani = c;}} style={[this.state.pullPan.getLayout()]}>
                     {this.renderTopIndicator()}
                     <View ref={(c) => {this.scrollContainer = c;}} {...this.panResponder.panHandlers} style={{width: this.state.width, height: this.state.height}}>
                         {this.getScrollable(refreshControl)}
                     </View>
                 </Animated.View>
+                  {this.props.topTip&&this.state.topTip?this.renderTopTip():null}
             </View>
         );
     }
-
+    renderTopTip(){
+      return (
+          <TouchableOpacity style={{position:'absolute',bottom:18,right:10,zIndex:58}} onPress={()=>this.scroll.scrollTo({x:0,y:0,animateds:true})} activeOpacity={.9}>
+              {this.props.topTip?this.props.topTip:<Text>GoTop</Text>}
+          </TouchableOpacity>
+      )
+    }
     renderTopIndicator() {
         let { pulling, pullok, pullrelease } = this.flag;
         if (this.props.topIndicatorRender == null) {
