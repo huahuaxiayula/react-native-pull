@@ -57,6 +57,7 @@ export default class extends Component {
         this.isPullState = this.isPullState.bind(this);
         this.resetDefaultXYHandler = this.resetDefaultXYHandler.bind(this);
         this.resolveHandler = this.resolveHandler.bind(this);
+        this.onLoadingHandler = this.onLoadingHandler.bind(this);
         this.setFlag = this.setFlag.bind(this);
         this.renderTopIndicator = this.renderTopIndicator.bind(this);
         this.defaultTopIndicatorRender = this.defaultTopIndicatorRender.bind(this);
@@ -182,8 +183,13 @@ export default class extends Component {
 
     resetDefaultXYHandler() {
         this.flag = defaultFlag;
-        this.scroll.scrollTo({x:0, y: 0});
-        this.state.pullPan.setValue(this.defaultXY);
+        this.scroll&&this.scroll.scrollTo({x:0, y: 0,animated:true});
+        // this.state.pullPan.setValue(this.defaultXY);
+        Animated.timing(this.state.pullPan, {
+            toValue: this.defaultXY,
+            easing: Easing.linear,
+            duration: this.duration
+        }).start();
     }
 
     componentWillUpdate(nextProps, nextState) {
@@ -192,6 +198,16 @@ export default class extends Component {
         }
     }
 
+    onLoadingHandler() {
+        this.setFlag(flagPullrelease);
+        this.scroll.scrollTo({x:0, y: 0});
+        this.state.pullPan.setValue({x:0, y: 0});
+        // Animated.timing(this.state.pullPan, {
+        //     toValue: {x: 0, y: 0},
+        //     easing: Easing.linear,
+        //     duration: this.duration
+        // }).start();
+    }
     onLayout(e) {
         if (this.state.width != e.nativeEvent.layout.width || this.state.height != e.nativeEvent.layout.height) {
             this.scrollContainer.setNativeProps({style: {width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height}});
